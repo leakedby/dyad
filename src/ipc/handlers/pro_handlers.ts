@@ -5,6 +5,7 @@ import { readSettings } from "../../main/settings"; // Assuming settings are rea
 import { UserBudgetInfo, UserBudgetInfoSchema } from "../ipc_types";
 import { IS_TEST_BUILD } from "../utils/test_utils";
 import { z } from "zod";
+import { getDyadProApiKey } from "@/lib/schemas";
 
 export const UserInfoResponseSchema = z.object({
   usedCredits: z.number(),
@@ -36,7 +37,7 @@ export function registerProHandlers() {
 
     const settings = readSettings();
 
-    const apiKey = settings.providerSettings?.auto?.apiKey?.value;
+    const apiKey = getDyadProApiKey(settings);
 
     if (!apiKey) {
       logger.error("LLM Gateway API key (Dyad Pro) is not configured.");

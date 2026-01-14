@@ -15,6 +15,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { IpcClient } from "@/ipc/ipc_client";
 import { useUserBudgetInfo } from "@/hooks/useUserBudgetInfo";
 import { UserBudgetInfo } from "@/ipc/ipc_types";
+import { isDyadProEnabled } from "@/lib/schemas";
 import {
   Tooltip,
   TooltipContent,
@@ -73,8 +74,8 @@ export const TitleBar = () => {
     }
   };
 
-  const isDyadPro = !!settings?.providerSettings?.auto?.apiKey?.value;
-  const isDyadProEnabled = Boolean(settings?.enableDyadPro);
+  const isDyadPro = true;
+  const dyadProEnabled = true;
 
   return (
     <>
@@ -93,7 +94,7 @@ export const TitleBar = () => {
         >
           {displayText}
         </Button>
-        {isDyadPro && <DyadProButton isDyadProEnabled={isDyadProEnabled} />}
+        {isDyadPro && <DyadProButton isDyadProEnabled={dyadProEnabled} />}
 
         {/* Preview Header */}
         {location.pathname === "/chat" && (

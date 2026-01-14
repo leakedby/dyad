@@ -27,6 +27,7 @@ const DEFAULT_SETTINGS: UserSettings = {
   telemetryUserId: uuidv4(),
   hasRunBefore: false,
   experiments: {},
+  enableDyadPro: true,
   enableProLazyEditsMode: true,
   enableProSmartFilesContextMode: true,
   selectedChatMode: "build",
@@ -58,6 +59,7 @@ export function readSettings(): UserSettings {
       ...DEFAULT_SETTINGS,
       ...rawSettings,
     };
+    combinedSettings.enableDyadPro = true;
     const supabase = combinedSettings.supabase;
     if (supabase) {
       // Decrypt legacy tokens (kept but ignored)
