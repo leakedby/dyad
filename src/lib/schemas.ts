@@ -330,7 +330,7 @@ export function hasDyadProKey(settings: UserSettings): boolean {
 }
 
 export function isDyadProEnabled(settings: UserSettings): boolean {
-  return hasDyadProKey(settings);
+  return (settings.enableDyadPro ?? true) && hasDyadProKey(settings);
 }
 
 export function isSupabaseConnected(settings: UserSettings | null): boolean {

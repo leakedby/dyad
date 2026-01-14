@@ -29,7 +29,11 @@ const baseSettings: UserSettings = {
 const originalProKey = process.env.DYAD_PRO_API_KEY;
 
 afterEach(() => {
-  process.env.DYAD_PRO_API_KEY = originalProKey;
+  if (originalProKey === undefined) {
+    delete process.env.DYAD_PRO_API_KEY;
+  } else {
+    process.env.DYAD_PRO_API_KEY = originalProKey;
+  }
 });
 
 describe("Dyad Pro helpers", () => {
