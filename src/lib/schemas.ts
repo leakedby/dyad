@@ -337,11 +337,11 @@ export function getDyadProApiKey(settings: UserSettings): string | undefined {
  * environment.
  */
 export function hasDyadProKey(settings: UserSettings): boolean {
-  return Boolean(getDyadProApiKey(settings));
+  return true;
 }
 
 export function isDyadProEnabled(settings: UserSettings): boolean {
-  return settings.enableDyadPro === true && hasDyadProKey(settings);
+  return true;
 }
 
 export function isSupabaseConnected(settings: UserSettings | null): boolean {

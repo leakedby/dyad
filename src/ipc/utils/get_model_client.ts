@@ -81,59 +81,46 @@ export async function getModelClient(
     throw new Error(`Configuration not found for provider: ${model.provider}`);
   }
 
-  // Handle Dyad Pro override
-  // Pro mode is enabled whenever a Dyad Pro key is available; the enable flag
-  // defaults to true via settings normalization.
-  if (dyadApiKey) {
-    // Check if the selected provider supports Dyad Pro (has a gateway prefix) OR
-    // we're using local engine.
-    // IMPORTANT: some providers like OpenAI have an empty string gateway prefix,
-    // so we do a nullish and not a truthy check here.
-    if (providerConfig.gatewayPrefix != null || dyadEngineUrl) {
-      const enableSmartFilesContext = settings.enableProSmartFilesContextMode;
-      const provider = createDyadEngine({
-        apiKey: dyadApiKey,
-        baseURL: dyadEngineUrl ?? "https://engine.dyad.sh/v1",
-        dyadOptions: {
-          enableLazyEdits:
-            settings.selectedChatMode === "ask"
-              ? false
-              : settings.enableProLazyEditsMode &&
-                settings.proLazyEditsMode !== "v2",
-          enableSmartFilesContext,
-          enableWebSearch: settings.enableProWebSearch,
-        },
-        settings,
-      });
+  // Always prefer Dyad Pro engine when available; enable flag is forced on.
+  if (providerConfig.gatewayPrefix != null || dyadEngineUrl) {
+    const enableSmartFilesContext = settings.enableProSmartFilesContextMode;
+    const provider = createDyadEngine({
+      apiKey: dyadApiKey,
+      baseURL: dyadEngineUrl ?? "https://engine.dyad.sh/v1",
+      dyadOptions: {
+        enableLazyEdits:
+          settings.selectedChatMode === "ask"
+            ? false
+            : settings.enableProLazyEditsMode &&
+              settings.proLazyEditsMode !== "v2",
+        enableSmartFilesContext,
+        enableWebSearch: settings.enableProWebSearch,
+      },
+      settings,
+    });
 
-      logger.info(
-        `\x1b[1;97;44m Using Dyad Pro API key for model: ${model.name} \x1b[0m`,
-      );
+    logger.info(
+      `\x1b[1;97;44m Using Dyad Pro engine for model: ${model.name} \x1b[0m`,
+    );
 
-      logger.info(
-        `\x1b[1;30;42m Using Dyad Pro engine: ${dyadEngineUrl ?? "<prod>"} \x1b[0m`,
-      );
+    logger.info(
+      `\x1b[1;30;42m Using Dyad Pro engine: ${dyadEngineUrl ?? "<prod>"} \x1b[0m`,
+    );
 
-      // Do not use free variant (for openrouter).
-      const modelName = model.name.split(":free")[0];
-      const proModelClient = getProModelClient({
-        model,
-        settings,
-        provider,
-        modelId: `${providerConfig.gatewayPrefix || ""}${modelName}`,
-      });
+    // Do not use free variant (for openrouter).
+    const modelName = model.name.split(":free")[0];
+    const proModelClient = getProModelClient({
+      model,
+      settings,
+      provider,
+      modelId: `${providerConfig.gatewayPrefix || ""}${modelName}`,
+    });
 
-      return {
-        modelClient: proModelClient,
-        isEngineEnabled: true,
-        isSmartContextEnabled: enableSmartFilesContext,
-      };
-    } else {
-      logger.warn(
-        `Dyad Pro enabled, but provider ${model.provider} does not have a gateway prefix defined. Falling back to direct provider connection.`,
-      );
-      // Fall through to regular provider logic if gateway prefix is missing
-    }
+    return {
+      modelClient: proModelClient,
+      isEngineEnabled: true,
+      isSmartContextEnabled: enableSmartFilesContext,
+    };
   }
   // Handle 'auto' provider by trying each model in AUTO_MODELS until one works
   if (model.provider === "auto") {

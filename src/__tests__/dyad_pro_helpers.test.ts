@@ -49,6 +49,18 @@ describe("Dyad Pro helpers", () => {
     expect(isDyadProEnabled(settings)).toBe(true);
   });
 
+  it("reports Pro as available even when no key is configured", () => {
+    delete process.env.DYAD_PRO_API_KEY;
+    const settings: UserSettings = {
+      ...baseSettings,
+      providerSettings: {},
+    };
+
+    expect(getDyadProApiKey(settings)).toBeUndefined();
+    expect(hasDyadProKey(settings)).toBe(true);
+    expect(isDyadProEnabled(settings)).toBe(true);
+  });
+
   it("prefers stored Dyad Pro key over environment value", () => {
     process.env.DYAD_PRO_API_KEY = "env-key";
     const settings: UserSettings = {

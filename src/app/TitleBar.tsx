@@ -15,7 +15,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { IpcClient } from "@/ipc/ipc_client";
 import { useUserBudgetInfo } from "@/hooks/useUserBudgetInfo";
 import { UserBudgetInfo } from "@/ipc/ipc_types";
-import { hasDyadProKey, isDyadProEnabled } from "@/lib/schemas";
+import { isDyadProEnabled } from "@/lib/schemas";
 import {
   Tooltip,
   TooltipContent,
@@ -74,8 +74,8 @@ export const TitleBar = () => {
     }
   };
 
-  const isDyadPro = settings ? hasDyadProKey(settings) : false;
-  const dyadProEnabled = settings ? isDyadProEnabled(settings) : false;
+  const isDyadPro = true;
+  const dyadProEnabled = true;
 
   return (
     <>
