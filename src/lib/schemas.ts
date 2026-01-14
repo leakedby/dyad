@@ -318,7 +318,10 @@ export const UserSettingsSchema = z.object({
 export type UserSettings = z.infer<typeof UserSettingsSchema>;
 
 function getEnvDyadProApiKey(): string | undefined {
-  return typeof process !== "undefined" ? process.env?.DYAD_PRO_API_KEY : undefined;
+  if (typeof process === "undefined" || !process.env) {
+    return undefined;
+  }
+  return process.env.DYAD_PRO_API_KEY;
 }
 
 export function getDyadProApiKey(settings: UserSettings): string | undefined {
