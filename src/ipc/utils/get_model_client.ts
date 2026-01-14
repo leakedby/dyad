@@ -7,11 +7,12 @@ import { createAzure } from "@ai-sdk/azure";
 import type { LanguageModel } from "ai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { createAmazonBedrock } from "@ai-sdk/amazon-bedrock";
-import type {
-  LargeLanguageModel,
-  UserSettings,
-  VertexProviderSetting,
-  AzureProviderSetting,
+import {
+  getDyadProApiKey,
+  type LargeLanguageModel,
+  type UserSettings,
+  type VertexProviderSetting,
+  type AzureProviderSetting,
 } from "../../lib/schemas";
 import { getEnvVar } from "./read_env";
 import log from "electron-log";
@@ -71,7 +72,7 @@ export async function getModelClient(
 }> {
   const allProviders = await getLanguageModelProviders();
 
-  const dyadApiKey = settings.providerSettings?.auto?.apiKey?.value;
+  const dyadApiKey = getDyadProApiKey(settings);
 
   // --- Handle specific provider ---
   const providerConfig = allProviders.find((p) => p.id === model.provider);
