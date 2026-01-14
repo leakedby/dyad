@@ -82,7 +82,8 @@ export async function getModelClient(
   }
 
   // Handle Dyad Pro override
-  // Pro mode is always enabled when a Dyad Pro key is available
+  // Pro mode is enabled whenever a Dyad Pro key is available; the enable flag
+  // defaults to true via settings normalization.
   if (dyadApiKey) {
     // Check if the selected provider supports Dyad Pro (has a gateway prefix) OR
     // we're using local engine.
