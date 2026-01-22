@@ -33,6 +33,12 @@ import type {
   ImportAppResult,
   ImportAppParams,
   RenameBranchParams,
+  GitBranchAppIdParams,
+  CreateGitBranchParams,
+  GitBranchParams,
+  RenameGitBranchParams,
+  ListRemoteGitBranchesParams,
+  CommitChangesParams,
   UserBudgetInfo,
   CopyAppParams,
   App,
@@ -83,11 +89,16 @@ import type {
   AgentToolConsentRequestPayload,
   AgentToolConsentResponseParams,
   AgentTodosUpdatePayload,
+  AgentProblemsUpdatePayload,
   TelemetryEventPayload,
   GithubSyncOptions,
   ConsoleEntry,
+  SetAppThemeParams,
+  GetAppThemeParams,
+  UncommittedFile,
 } from "./ipc_types";
 import type { Template } from "../shared/templates";
+import type { Theme } from "../shared/themes";
 import type {
   AppChatContext,
   AppSearchResult,
@@ -142,6 +153,9 @@ export class IpcClient {
   private mcpConsentHandlers: Map<string, (payload: any) => void>;
   private agentConsentHandlers: Map<string, (payload: any) => void>;
   private agentTodosHandlers: Set<(payload: AgentTodosUpdatePayload) => void>;
+  private agentProblemsHandlers: Set<
+    (payload: AgentProblemsUpdatePayload) => void
+  >;
   private telemetryEventHandlers: Set<(payload: TelemetryEventPayload) => void>;
   // Global handlers called for any chat stream start (used for cleanup)
   private globalChatStreamStartHandlers: Set<(chatId: number) => void>;
@@ -155,6 +169,7 @@ export class IpcClient {
     this.mcpConsentHandlers = new Map();
     this.agentConsentHandlers = new Map();
     this.agentTodosHandlers = new Set();
+    this.agentProblemsHandlers = new Set();
     this.telemetryEventHandlers = new Set();
     this.globalChatStreamStartHandlers = new Set();
     this.globalChatStreamEndHandlers = new Set();
@@ -309,6 +324,13 @@ export class IpcClient {
     this.ipcRenderer.on("agent-tool:todos-update", (payload) => {
       for (const handler of this.agentTodosHandlers) {
         handler(payload as unknown as AgentTodosUpdatePayload);
+      }
+    });
+
+    // Agent problems update from main
+    this.ipcRenderer.on("agent-tool:problems-update", (payload) => {
+      for (const handler of this.agentProblemsHandlers) {
+        handler(payload as unknown as AgentProblemsUpdatePayload);
       }
     });
 
@@ -881,7 +903,7 @@ export class IpcClient {
   public async abortGithubMerge(appId: number): Promise<void> {
     await this.ipcRenderer.invoke("github:merge-abort", {
       appId,
-    });
+    } satisfies GitBranchAppIdParams);
   }
 
   public async continueGithubRebase(appId: number): Promise<void> {
@@ -901,7 +923,9 @@ export class IpcClient {
   }
 
   public async fetchGithubRepo(appId: number): Promise<void> {
-    await this.ipcRenderer.invoke("github:fetch", { appId });
+    await this.ipcRenderer.invoke("github:fetch", {
+      appId,
+    } satisfies GitBranchAppIdParams);
   }
 
   public async createGithubBranch(
@@ -913,21 +937,27 @@ export class IpcClient {
       appId,
       branch,
       from,
-    });
+    } satisfies CreateGitBranchParams);
   }
 
   public async deleteGithubBranch(
     appId: number,
     branch: string,
   ): Promise<void> {
-    await this.ipcRenderer.invoke("github:delete-branch", { appId, branch });
+    await this.ipcRenderer.invoke("github:delete-branch", {
+      appId,
+      branch,
+    } satisfies GitBranchParams);
   }
 
   public async switchGithubBranch(
     appId: number,
     branch: string,
   ): Promise<void> {
-    await this.ipcRenderer.invoke("github:switch-branch", { appId, branch });
+    await this.ipcRenderer.invoke("github:switch-branch", {
+      appId,
+      branch,
+    } satisfies GitBranchParams);
   }
 
   public async renameGithubBranch(
@@ -939,11 +969,14 @@ export class IpcClient {
       appId,
       oldBranch,
       newBranch,
-    });
+    } satisfies RenameGitBranchParams);
   }
 
   public async mergeGithubBranch(appId: number, branch: string): Promise<void> {
-    await this.ipcRenderer.invoke("github:merge-branch", { appId, branch });
+    await this.ipcRenderer.invoke("github:merge-branch", {
+      appId,
+      branch,
+    } satisfies GitBranchParams);
   }
 
   public async getGithubMergeConflicts(appId: number): Promise<string[]> {
@@ -953,7 +986,9 @@ export class IpcClient {
   public async listLocalGithubBranches(
     appId: number,
   ): Promise<{ branches: string[]; current: string | null }> {
-    return this.ipcRenderer.invoke("github:list-local-branches", { appId });
+    return this.ipcRenderer.invoke("github:list-local-branches", {
+      appId,
+    } satisfies GitBranchAppIdParams);
   }
 
   public async listRemoteGithubBranches(
@@ -963,7 +998,7 @@ export class IpcClient {
     return this.ipcRenderer.invoke("github:list-remote-branches", {
       appId,
       remote,
-    });
+    } satisfies ListRemoteGitBranchesParams);
   }
 
   public async getGithubState(appId: number): Promise<{
@@ -971,6 +1006,16 @@ export class IpcClient {
     rebaseInProgress: boolean;
   }> {
     return this.ipcRenderer.invoke("github:get-git-state", { appId });
+  }
+
+  public async getUncommittedFiles(appId: number): Promise<UncommittedFile[]> {
+    return this.ipcRenderer.invoke("git:get-uncommitted-files", {
+      appId,
+    } satisfies GitBranchAppIdParams);
+  }
+
+  public async commitChanges(params: CommitChangesParams): Promise<string> {
+    return this.ipcRenderer.invoke("git:commit-changes", params);
   }
 
   public async listCollaborators(
@@ -1145,6 +1190,19 @@ export class IpcClient {
     this.agentTodosHandlers.add(handler);
     return () => {
       this.agentTodosHandlers.delete(handler);
+    };
+  }
+
+  /**
+   * Subscribe to agent problems updates from the local agent.
+   * Called when the agent runs type checks and updates the problems report.
+   */
+  public onAgentProblemsUpdate(
+    handler: (payload: AgentProblemsUpdatePayload) => void,
+  ) {
+    this.agentProblemsHandlers.add(handler);
+    return () => {
+      this.agentProblemsHandlers.delete(handler);
     };
   }
 
@@ -1543,6 +1601,7 @@ export class IpcClient {
 
   async checkAppName(params: {
     appName: string;
+    skipCopy?: boolean;
   }): Promise<{ exists: boolean }> {
     return this.ipcRenderer.invoke("check-app-name", params);
   }
@@ -1612,6 +1671,19 @@ export class IpcClient {
   // Template methods
   public async getTemplates(): Promise<Template[]> {
     return this.ipcRenderer.invoke("get-templates");
+  }
+
+  // --- Themes ---
+  public async getThemes(): Promise<Theme[]> {
+    return this.ipcRenderer.invoke("get-themes");
+  }
+
+  public async setAppTheme(params: SetAppThemeParams): Promise<void> {
+    await this.ipcRenderer.invoke("set-app-theme", params);
+  }
+
+  public async getAppTheme(params: GetAppThemeParams): Promise<string | null> {
+    return this.ipcRenderer.invoke("get-app-theme", params);
   }
 
   // --- Prompts Library ---

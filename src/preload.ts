@@ -80,6 +80,8 @@ const validInvokeChannels = [
   "github:delete-branch",
   "github:get-git-state",
   "github:disconnect",
+  "git:get-uncommitted-files",
+  "git:commit-changes",
   "neon:create-project",
   "neon:get-project",
   "neon:delete-branch",
@@ -167,6 +169,10 @@ const validInvokeChannels = [
   // Console logs
   "add-log",
   "clear-logs",
+  // Themes
+  "get-themes",
+  "set-app-theme",
+  "get-app-theme",
   // Test-only channels
   // These should ALWAYS be guarded with IS_TEST_BUILD in the main process.
   // We can't detect with IS_TEST_BUILD in the preload script because
@@ -195,6 +201,8 @@ const validReceiveChannels = [
   "agent-tool:consent-request",
   // Agent todos update from main to renderer
   "agent-tool:todos-update",
+  // Agent problems update from main to renderer
+  "agent-tool:problems-update",
   // Telemetry events from main to renderer
   "telemetry:event",
 ] as const;
