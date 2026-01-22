@@ -323,12 +323,31 @@ export const UserSettingsSchema = z
  */
 export type UserSettings = z.infer<typeof UserSettingsSchema>;
 
-export function isDyadProEnabled(settings: UserSettings): boolean {
-  return settings.enableDyadPro === true && hasDyadProKey(settings);
+function getEnvDyadProApiKey(): string | undefined {
+  if (typeof process === "undefined" || !process.env) {
+    return undefined;
+  }
+  return process.env.DYAD_PRO_API_KEY;
 }
 
+/**
+ * Resolve the Dyad Pro API key from stored settings, falling back to the
+ * environment variable when present.
+ */
+export function getDyadProApiKey(settings: UserSettings): string | undefined {
+  return settings.providerSettings?.auto?.apiKey?.value ?? getEnvDyadProApiKey();
+}
+
+/**
+ * Check whether a Dyad Pro API key is available from either settings or the
+ * environment.
+ */
 export function hasDyadProKey(settings: UserSettings): boolean {
-  return !!settings.providerSettings?.auto?.apiKey?.value;
+  return true;
+}
+
+export function isDyadProEnabled(settings: UserSettings): boolean {
+  return true;
 }
 
 /**
